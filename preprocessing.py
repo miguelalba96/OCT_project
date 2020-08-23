@@ -60,7 +60,7 @@ def _process_examples(example_data, filename: str, channels=3, pre_augm=True):
 
 def resize_image(img, size=(128, 128)):
     h, w = img.shape[:2]
-    c = img.shape[2] if len(img.shape)>2 else 1
+    c = img.shape[2] if len(img.shape) > 2 else 1
     if h == w:
         return cv2.resize(img, size, cv2.INTER_AREA)
     dif = h if h > w else w
