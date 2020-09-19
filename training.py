@@ -26,7 +26,7 @@ class OCTtraining(object):
         self.data_path = data_path
         # hyper parameter
         self.params = {
-            'batch_size': 128,
+            'batch_size': 64,
             'learning_rate': 0.001,
             'schedule': False,  # adaptive learning rate
             'optimizer': 'ADAM',  # SGD, SGDM
@@ -79,7 +79,7 @@ class OCTtraining(object):
 
     def build_model(self, architecture, **params):
         input_shape = [self.img_size[0], self.img_size[1], 3]
-        model = getattr(models, str(architecture))(name=self.modelname, **params)
+        model = getattr(models, str(architecture))(**params)
         try:
             print(model.summary())
         except ValueError:
@@ -143,7 +143,7 @@ class OCTtraining(object):
         test = self.test_data.balanced_batch()
         data = tf.data.Dataset.zip((train, test))
 
-        epoch_bar = tqdm(total=self.epochs, desc='Epoch', position=0)
+        # epoch_bar = tqdm(total=self.epochs, desc='Epoch', position=0)
         for epoch in range(int(self.epoch_counter), int(self.epochs)):
             self.epoch_counter.assign_add(1)
             step_bar = tqdm(total=self.steps_epoch, desc='Steps', position=1)
@@ -176,15 +176,15 @@ class OCTtraining(object):
                         write_tensorboard(train_summary, step=self.step, full_eval=True)
                     break
 
-            epoch_bar.update(1)
+            # epoch_bar.update(1)
 
             for _test in self.test_data.test_dataset():
                 test_summary = self.test_step(_test[0], _test[1])
             with self.test_writer.as_default():
                 write_tensorboard(test_summary, step=self.step, full_eval=True)
 
-            template = 'train loss: {}, test loss: {}, train acc: {}, test acc: {} <='
-            print(template.format(train_loss, test_summary['loss'], train_acc, test_summary['accuracy']))
+            template = '{}: train loss: {}, test loss: {}, train acc: {}, test acc: {}'
+            print(template.format(int(epoch), train_loss, test_summary['loss'], train_acc, test_summary['accuracy']))
 
             self.train_writer.flush()
             self.test_writer.flush()
@@ -200,5 +200,19 @@ class OCTtraining(object):
         return None
 
 
+def _20200915_first_model():
+    modelname = '20200919_primer_modelo_eyenet_batch64'
+    data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
+    model = 'sequential_model_1'
+    cnn = OCTtraining(modelname, data_path, model,
+                      hyperparams=dict(learning_rate=0.01, epochs=100,
+                                       optimizer='SGDM',
+                                       schedule=True,
+                                       step_size=5000),
+                      crop_size=[136, 136])
+    cnn.train()
+
+
 if __name__ == '__main__':
+    _20200915_first_model()
     pass

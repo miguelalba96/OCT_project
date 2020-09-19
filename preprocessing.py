@@ -43,10 +43,9 @@ def _process_examples(example_data, filename: str, channels=3, pre_augm=True):
     with tf.io.TFRecordWriter(filename) as writer:
         for i, ex in enumerate(example_data):
             # define pre augmentation of pre image resizing
-            if pre_augm:
-                image = pre_augmentation(ex['image']).tostring()
-            else:
-                image = ex['image'].tostring()
+            image = pre_augmentation(ex['image']) if pre_augm else ex['image']
+            image = image.astype(np.float32)
+            image = image.tostring()
             example = tf.train.Example(features=tf.train.Features(feature={
                 'height': _int64_feature(ex['image'].shape[0]),
                 'width': _int64_feature(ex['image'].shape[1]),
@@ -99,8 +98,10 @@ class Preprocessing(object):
         data = []
         for fn in filename_shard:
             img = utils.imread(fn)
+            img = resize_image(img, size=(136, 136))
+            assert img.shape == (136, 136, 3)
             meta = {
-                'image': resize_image(img, size=(136, 136)),
+                'image': img,
                 'filename': fn,
                 'label': label,
                 'dataset': type
@@ -132,3 +133,4 @@ class Preprocessing(object):
 if __name__ == '__main__':
     prep = Preprocessing(data_path='/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT')
     prep.generate_example_sets()
+    pass

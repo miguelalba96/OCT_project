@@ -239,7 +239,7 @@ class GroupConvBlock(tf.keras.layers.Layer):
         self.input_channels = input_channels // channel_groups
         for i in range(channel_groups):
             setattr(self, "conv%i" % i,
-                    tf.keras.layers.Conv2D(channel_groups, kernel_size=3,  padding='same', use_bias=False,
+                    tf.keras.layers.Conv2D(channel_groups, kernel_size=3, padding='same', use_bias=False,
                                            strides=strides, **kwargs))
 
     def call(self, inputs, **kwargs):
@@ -253,7 +253,7 @@ class GroupConvBlock(tf.keras.layers.Layer):
 
 
 class DepthWiseDense(tf.keras.layers.Layer):
-    def __init__(self, nodes_in, nodes_out=2, name='depth_wise',  **kwargs):
+    def __init__(self, nodes_in, nodes_out=2, name='depth_wise', **kwargs):
         super(DepthWiseDense, self).__init__(name=name)
         self.nodes_in = nodes_in
         self.nodes_out = nodes_out
@@ -319,4 +319,12 @@ def build_ResNeXt_block(filters, strides, groups, repeat_num, name='rnext_block'
     return block
 
 
-
+def conv_layer(x, num_filters, kernel_size, padding='same', strides=1, act_type='relu',
+               batch_norm=False, scope='conv', **opts):
+    x = tf.keras.layers.Conv2D(num_filters,
+                               kernel_size=kernel_size,
+                               strides=strides, name=scope, padding=padding, **opts)(x)
+    x = tf.keras.layers.BatchNormalization(name=scope + '/bn')(x) if batch_norm else x
+    if act_type == 'relu':
+        x = tf.keras.layers.ReLU(name=scope + '/relu')(x)
+    return x

@@ -47,8 +47,8 @@ class DataLoader(object):
         self.classes = ['NORMAL', 'CNV', 'DME', 'DRUSEN']
         self.seed = 1
         if self.training == 'train':
-            self.batch_size = 128
-            self.buffer = 4000
+            self.batch_size = 64
+            self.buffer = 5000
         else:
             self.batch_size = 128
             self.buffer = 100
@@ -62,22 +62,18 @@ class DataLoader(object):
         }
         record = tf.io.parse_single_example(record, features)
         img = tf.io.decode_raw(record['image'], tf.float32)
-        img = tf.reshape(img, [record['height'], record['width'], 1])
+        img = tf.reshape(img, [record['height'], record['width'], 3])
         label = tf.one_hot(record['label'], len(self.classes), dtype=tf.float32)
         return img, label
 
     def random_jitteing(self, crop):
-        crop = tf.image.resize(crop, [78, 110], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        crop = tf.image.random_crop(crop, size=[68, 100, 1])
+        crop = tf.image.resize(crop, [136, 136], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        crop = tf.image.random_crop(crop, size=[136, 136, 3])
         return crop
 
     def agumentation(self, crop, label):
-        choise = tf.random.uniform(shape=[], minval=0., maxval=1., dtype=tf.float32)
-        shape = crop.get_shape()
+        crop = self.random_jitteing(crop)
         crop = tf.image.random_flip_left_right(crop)
-        crop = tf.py_function(external_augmentation, inp=[crop], Tout=tf.float32)
-        crop.set_shape(shape)
-        crop = tf.cond(choise < 0.5, lambda: crop, lambda: self.random_jitteing(crop))
         return crop, label
 
     def load_dataset(self, label):
@@ -100,7 +96,7 @@ class DataLoader(object):
         importance = [0.25, 0.25, 0.25, 0.25]
         sampled_dataset = tf.data.experimental.sample_from_datasets(datasets, weights=importance)
         sampled_dataset = sampled_dataset.batch(self.batch_size)
-        sampled_dataset = sampled_dataset.prefetch(2)
+        sampled_dataset = sampled_dataset.prefetch(1)
         return sampled_dataset
 
     def test_dataset(self, dataset_name=None):

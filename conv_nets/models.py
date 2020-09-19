@@ -53,6 +53,44 @@ class LAEyeDeepNET(tf.keras.Model):
         return x
 
 
+def sequential_model_1(crop_size, **kwargs):
+    inputs = tf.keras.Input(shape=tuple(crop_size) + (3,), name='input')  # (128, 136, 136, 3)
+    opts = {
+        'kernel_initializer': tf.keras.initializers.VarianceScaling(mode='fan_in',
+                                                                    distribution='truncated_normal'),
+        'bias_initializer': tf.keras.initializers.Constant(0.1)
+    }
+    opts.update(**kwargs)
+    x = inputs
+    x = layers.conv_layer(x, 8, 7, batch_norm=True, scope='conv1', **opts)
+    x = layers.conv_layer(x, 8, 3, batch_norm=True, scope='conv2', **opts)
+    x = tf.keras.layers.MaxPooling2D((2, 2), name='pool1')(x)
+
+    x = layers.conv_layer(x, 16, 3, batch_norm=True, scope='conv3', **opts)
+    x = layers.conv_layer(x, 16, 3, batch_norm=True, scope='conv4', **opts)
+    x = tf.keras.layers.MaxPooling2D((2, 2), name='pool2')(x)
+
+    x = layers.conv_layer(x, 32, 3, batch_norm=True, scope='conv5', **opts)
+    x = layers.conv_layer(x, 32, 3, batch_norm=True, scope='conv6', **opts)
+    x = layers.conv_layer(x, 32, 3, batch_norm=True, scope='conv7', **opts)
+    x = tf.keras.layers.MaxPooling2D((2, 2), name='pool3')(x)
+
+    x = layers.conv_layer(x, 64, 3, batch_norm=True, scope='conv8', **opts)
+    x = layers.conv_layer(x, 64, 3, batch_norm=True, scope='conv9', **opts)
+    x = layers.conv_layer(x, 96, 3, batch_norm=True, scope='conv10', **opts)
+    x = tf.keras.layers.MaxPooling2D((2, 2), name='pool4')(x)
+
+    x = tf.keras.layers.GlobalAveragePooling2D(name='gap')(x)
+    x = tf.keras.layers.Dense(64, name='fc1', activation='relu', **opts)(x)
+    x = tf.keras.layers.Dropout(0.5, name='dropout_1')(x)
+    x = tf.keras.layers.Dense(128, name='fc2', activation='relu', **opts)(x)
+    x = tf.keras.layers.Dropout(0.5, name='dropout_2')(x)
+    prob = tf.keras.layers.Dense(4, activation='softmax', name='prob', **opts)(x)
+    model = tf.keras.Model(inputs=inputs, outputs=prob, name='model1')
+    return model
+
+
+
 class EyeDeepNET(tf.keras.Model):
     def __init__(self, name=None, **kwargs):
         super(EyeDeepNET, self).__init__(name=name)
