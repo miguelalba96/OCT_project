@@ -43,8 +43,8 @@ def _process_examples(example_data, filename: str, channels=3, pre_augm=True):
     with tf.io.TFRecordWriter(filename) as writer:
         for i, ex in enumerate(example_data):
             # define pre augmentation of pre image resizing
-            image = pre_augmentation(ex['image']) if pre_augm else ex['image']
-            image = image.astype(np.float32)
+            # image = pre_augmentation(ex['image']) if pre_augm else ex['image']
+            image = ex['image'].astype(np.float32)
             image = image.tostring()
             example = tf.train.Example(features=tf.train.Features(feature={
                 'height': _int64_feature(ex['image'].shape[0]),
@@ -79,8 +79,7 @@ def resize_image(img, size=(128, 128)):
 
 
 def pre_augmentation(img):
-    img = utils.standardize_img(img)
-    return img
+    raise NotImplementedError
 
 
 def shard_dataset(dataset, num_records=50):

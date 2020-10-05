@@ -48,9 +48,9 @@ class DataLoader(object):
         self.seed = 1
         if self.training == 'train':
             self.batch_size = 64
-            self.buffer = 5000
+            self.buffer = 1000
         else:
-            self.batch_size = 128
+            self.batch_size = 64
             self.buffer = 100
 
     def parse_record(self, record):
@@ -67,11 +67,16 @@ class DataLoader(object):
         return img, label
 
     def random_jitteing(self, crop):
-        crop = tf.image.resize(crop, [136, 136], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        crop = tf.image.resize(crop, [144, 144], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
         crop = tf.image.random_crop(crop, size=[136, 136, 3])
         return crop
 
-    def agumentation(self, crop, label):
+    @staticmethod
+    def preprocess(crop, label):
+        crop = tf.image.per_image_standardization(crop)
+        return crop, label
+
+    def augmentations(self, crop, label):
         crop = self.random_jitteing(crop)
         crop = tf.image.random_flip_left_right(crop)
         return crop, label
@@ -84,7 +89,9 @@ class DataLoader(object):
                                      num_parallel_calls=min(len(filenames), tf.data.experimental.AUTOTUNE))
         dataset = dataset.map(self.parse_record, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         if self.training == 'train':
-            dataset = dataset.map(self.agumentation, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            dataset = dataset.map(self.augmentations, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        dataset = dataset.map(self.preprocess, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset = dataset.shuffle(self.buffer, seed=self.seed)
         dataset = dataset.repeat()
         return dataset
@@ -96,8 +103,25 @@ class DataLoader(object):
         importance = [0.25, 0.25, 0.25, 0.25]
         sampled_dataset = tf.data.experimental.sample_from_datasets(datasets, weights=importance)
         sampled_dataset = sampled_dataset.batch(self.batch_size)
-        sampled_dataset = sampled_dataset.prefetch(1)
+        sampled_dataset = sampled_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return sampled_dataset
+
+    def normal_batch(self):
+        files = os.path.join(self.data_path, '{}_*.tfrecord'.format(self.training))
+        filenames = glob.glob(files)
+        dataset = tf.data.Dataset.list_files(files, shuffle=True, seed=self.seed)
+        dataset = dataset.interleave(lambda fn: tf.data.TFRecordDataset(fn), cycle_length=len(filenames),
+                                     num_parallel_calls=min(len(filenames), tf.data.experimental.AUTOTUNE))
+        dataset = dataset.map(self.parse_record, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        if self.training == 'train':
+            dataset = dataset.map(self.augmentations, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        dataset = dataset.map(self.preprocess, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset = dataset.shuffle(self.buffer, seed=self.seed)
+        dataset = dataset.repeat()  # if self.training == 'train' else dataset.repeat()
+        dataset = dataset.batch(self.batch_size)
+        dataset = dataset.prefetch(2)
+        return dataset
 
     def test_dataset(self, dataset_name=None):
         """
@@ -113,6 +137,7 @@ class DataLoader(object):
         dataset = dataset.interleave(lambda fn: tf.data.TFRecordDataset(fn), cycle_length=len(filenames),
                                      num_parallel_calls=min(len(filenames), tf.data.experimental.AUTOTUNE))
         dataset = dataset.map(self.parse_record, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset = dataset.map(self.preprocess, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset = dataset.repeat(1)
         dataset = dataset.batch(self.batch_size)
         return dataset
