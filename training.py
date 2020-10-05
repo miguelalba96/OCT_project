@@ -33,7 +33,8 @@ class OCTtraining(object):
             'test_iter': 100,
             'step_size': 2000,
             'epochs': 50,
-            'max_class_samples': 51140  # the second time I see again a NORMAL sample
+            'max_class_samples': 51140,  # the second time I see again a NORMAL sample
+            'total_num_samples': 108309
         }
         self.params.update(hyperparams)
         self.img_size = img_size
@@ -41,6 +42,7 @@ class OCTtraining(object):
 
         # steps per epoch
         self.steps_epoch = np.ceil(2.0 * self.params['max_class_samples'] / self.params['batch_size'])
+        # self.steps_epoch = np.ceil(self.params['total_num_samples'] / self.params['batch_size'])
         self.epochs = self.params['epochs']
         self.epoch_counter = tf.Variable(initial_value=0, trainable=False, dtype=tf.int64)
         self.step = tf.Variable(initial_value=0, trainable=False, dtype=tf.int64)
@@ -53,6 +55,7 @@ class OCTtraining(object):
 
         self.lr, self.opt = self.optimizer()
         self.loss = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
+        self.sample_weights = tf.constant([0.25, 0.25, 0.25, 0.25])
 
         self.train_loss, self.test_loss, self.train_acc, self.test_acc = self.build_metrics()
 
@@ -182,6 +185,8 @@ class OCTtraining(object):
                 test_summary = self.test_step(_test[0], _test[1])
             with self.test_writer.as_default():
                 write_tensorboard(test_summary, step=self.step, full_eval=True)
+                self.test_loss.reset_states()
+                self.test_acc.reset_states()
 
             template = '{}: train loss: {}, test loss: {}, train acc: {}, test acc: {}'
             print(template.format(int(epoch), train_loss, test_summary['loss'], train_acc, test_summary['accuracy']))
@@ -190,10 +195,11 @@ class OCTtraining(object):
             self.test_writer.flush()
 
             self.ckpt.save(epoch)
-            # TODO: fix serialization with low level API
-            self.model.save_weights(os.path.join(self.model_path, 'weights', 'pretrained'),
-                                    overwrite=True, save_format='tf')
+            # # TODO: fix serialization with low level API
+            # self.model.save_weights(os.path.join(self.model_path, 'weights', 'pretrained'),
+            #                         overwrite=True, save_format='tf')
             self.model.save(os.path.join(self.model_path, 'frozen'))
+            self.model.save(os.path.join(self.model_path, 'model.h5'))
             if int(self.step % (self.epochs * self.steps_epoch)) == 0:
                 break
         print('Finished Training')
@@ -213,6 +219,34 @@ def _20200915_first_model():
     cnn.train()
 
 
+def _20200923_dense_model():
+    modelname = '20200919_primer_modelo_densenet_batch64'
+    data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
+    model = 'dense_net_red'
+    cnn = OCTtraining(modelname, data_path, model,
+                      hyperparams=dict(learning_rate=0.02, epochs=100,
+                                       optimizer='SGDM',
+                                       schedule=True,
+                                       step_size=5000),
+                      crop_size=[136, 136])
+    cnn.train()
+
+
+def _20200929_dense_net():
+    modelname = '20200929_primer_modelo_squeeze_densenet_batch64'
+    data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
+    model = 'dense_net_red'
+    cnn = OCTtraining(modelname, data_path, model,
+                      hyperparams=dict(learning_rate=0.02, epochs=60,
+                                       optimizer='SGDM',
+                                       schedule=True,
+                                       step_size=5000),
+                      crop_size=[136, 136])
+    cnn.train()
+
+
 if __name__ == '__main__':
-    _20200915_first_model()
+    # _20200915_first_model()
+    # _20200923_dense_model()
+    _20200929_dense_net()
     pass
