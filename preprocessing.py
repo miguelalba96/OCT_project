@@ -78,10 +78,6 @@ def resize_image(img, size=(128, 128)):
     return cv2.resize(mask, size, interpolation)
 
 
-def pre_augmentation(img):
-    raise NotImplementedError
-
-
 def shard_dataset(dataset, num_records=50):
     chunk = len(dataset) // num_records
     parts = [(k * chunk) for k in range(len(dataset)) if (k * chunk) < len(dataset)]
@@ -97,7 +93,8 @@ class Preprocessing(object):
         data = []
         for fn in filename_shard:
             img = utils.imread(fn)
-            img = resize_image(img, size=(136, 136))
+            # img = resize_image(img, size=(136, 136))
+            img = cv2.resize(img, (136, 136), interpolation=cv2.INTER_CUBIC)
             assert img.shape == (136, 136, 3)
             meta = {
                 'image': img,

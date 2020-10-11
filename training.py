@@ -140,13 +140,20 @@ class OCTtraining(object):
         summary = {'type': 'test', 'loss': loss, 'average_loss': _loss, 'accuracy': _acc}
         return summary
 
+    def complete_evaluation(self):
+        for _test in self.test_data.test_dataset():
+            test_summary = self.test_step(_test[0], _test[1])
+        with self.test_writer.as_default():
+            write_tensorboard(test_summary, step=self.step, full_eval=True)
+            self.test_loss.reset_states()
+            self.test_acc.reset_states()
+
     def train(self):
         print('Starting Training')
         train = self.train_data.balanced_batch()
         test = self.test_data.balanced_batch()
         data = tf.data.Dataset.zip((train, test))
 
-        # epoch_bar = tqdm(total=self.epochs, desc='Epoch', position=0)
         for epoch in range(int(self.epoch_counter), int(self.epochs)):
             self.epoch_counter.assign_add(1)
             step_bar = tqdm(total=self.steps_epoch, desc='Steps', position=1)
@@ -179,14 +186,7 @@ class OCTtraining(object):
                         write_tensorboard(train_summary, step=self.step, full_eval=True)
                     break
 
-            # epoch_bar.update(1)
-
-            for _test in self.test_data.test_dataset():
-                test_summary = self.test_step(_test[0], _test[1])
-            with self.test_writer.as_default():
-                write_tensorboard(test_summary, step=self.step, full_eval=True)
-                self.test_loss.reset_states()
-                self.test_acc.reset_states()
+            self.complete_evaluation()
 
             template = '{}: train loss: {}, test loss: {}, train acc: {}, test acc: {}'
             print(template.format(int(epoch), train_loss, test_summary['loss'], train_acc, test_summary['accuracy']))
@@ -207,7 +207,7 @@ class OCTtraining(object):
 
 
 def _20200915_first_model():
-    modelname = '20200919_primer_modelo_eyenet_batch64'
+    modelname = '20201011_vanilla_cnn_batch64'
     data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
     model = 'sequential_model_1'
     cnn = OCTtraining(modelname, data_path, model,
@@ -246,7 +246,7 @@ def _20200929_dense_net():
 
 
 if __name__ == '__main__':
-    # _20200915_first_model()
+    _20200915_first_model()
     # _20200923_dense_model()
-    _20200929_dense_net()
+    # _20200929_dense_net()
     pass

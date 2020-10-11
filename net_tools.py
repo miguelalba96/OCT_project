@@ -29,13 +29,6 @@ def external_augmentation(crop):
                    rotate=(-8, 8),
                    shear=(-8, 8),
                    mode='edge'))])
-
-    # crop = overexpose(crop) if random.random() < 0.2 else crop
-
-    # if random.random() < 0.1:
-        # blur_sigma = random.uniform(0, 1.5)
-        # crop = blur_image(crop, blur_sigma)
-
     crop = seq.augment_image(crop)
     return crop
 
