@@ -61,7 +61,7 @@ def squeeze_excitation(x, ratio=16, scope='se', **opts):
     https://arxiv.org/abs/1709.01507
     """
     opts = dict(opts, kernel_regularizer=tf.keras.regularizers.l2(0.0001))
-    filters = x.get_shape()[-1]
+    filters = x.get_shape()[-1]  # num channels (B, H, W, C)
     blockname = scope + '/squeeze_excitation'
     se = tf.keras.layers.GlobalAveragePooling2D(name=blockname + '/gap')(x)
     se = tf.keras.layers.Reshape((1, 1, filters), name=blockname + '/reshape1')(se)

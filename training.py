@@ -233,7 +233,7 @@ def _20200923_dense_model():
 
 
 def _20200929_dense_net():
-    modelname = '20200929_primer_modelo_squeeze_densenet_batch64'
+    modelname = '20201020_dense_net_squeeze_densenet_batch64_clean_data'
     data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
     model = 'dense_net_red'
     cnn = OCTtraining(modelname, data_path, model,
