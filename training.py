@@ -220,7 +220,7 @@ def _20200915_first_model():
 
 
 def _20200923_dense_model():
-    modelname = '20200919_primer_modelo_densenet_batch64'
+    modelname = '202017_dense_net_batch64_cleaner_data'
     data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
     model = 'dense_net_red'
     cnn = OCTtraining(modelname, data_path, model,
@@ -246,7 +246,7 @@ def _20200929_dense_net():
 
 
 if __name__ == '__main__':
-    _20200915_first_model()
-    # _20200923_dense_model()
+    # _20200915_first_model()
+    _20200923_dense_model()
     # _20200929_dense_net()
     pass
