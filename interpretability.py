@@ -91,13 +91,14 @@ def show(img):
 
 if __name__ == '__main__':
     utils.setup_gpus()
-    dme = glob.glob('/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/test/DRUSEN/*')
+    dme = glob.glob('/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/test/DME/*')
     data = prep_eval_data(dme)
-    img = data[0]
+    img = data[10]
     modelname = '20201011_vanilla_cnn_batch64'
     model_path = os.path.join('./trained_models', modelname, 'frozen')
     model = tf.keras.models.load_model(model_path)
     explainer = LIME(model, areas=7, perturbations=700)
-    ex, mask, super_pix = explainer.fit_linear_model(img, label=3)
-    show(ex)
-    show(skimage.segmentation.mark_boundaries(img, super_pix))
+    ex, mask, super_pix = explainer.fit_linear_model(img, label=2)
+    super_pix = skimage.segmentation.mark_boundaries(img, super_pix)
+    full_image = np.concatenate((ex, super_pix), axis=1)
+    show(full_image)

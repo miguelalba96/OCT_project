@@ -237,7 +237,7 @@ def _20200929_dense_net():
     data_path = '/media/miguel/ALICIUM/Miguel/DOWNLOADS/ZhangLabData/CellData/OCT/preprocessing'
     model = 'dense_net_red'
     cnn = OCTtraining(modelname, data_path, model,
-                      hyperparams=dict(learning_rate=0.02, epochs=60,
+                      hyperparams=dict(learning_rate=0.025, epochs=50,
                                        optimizer='SGDM',
                                        schedule=True,
                                        step_size=5000),
@@ -247,6 +247,6 @@ def _20200929_dense_net():
 
 if __name__ == '__main__':
     # _20200915_first_model()
-    _20200923_dense_model()
-    # _20200929_dense_net()
+    # _20200923_dense_model()
+    _20200929_dense_net()
     pass

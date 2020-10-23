@@ -51,11 +51,11 @@ def dense_net_red(crop_size, **kwargs):
     opts.update(**kwargs)
     x = inputs
     x = layers.conv_layer(x, 8, 7, batch_norm=True, scope='conv1', **opts)
-    x = tf.keras.layers.MaxPooling2D((2, 2), name='pool1')(x)
+    x = tf.keras.layers.MaxPooling2D((3, 2), name='pool1')(x)
 
     growth_rate = 8
-    num_filters = 32
-    num_layers = [4, 6, 8, 8, 8]
+    num_filters = 16
+    num_layers = [4, 6, 6, 8, 8]
     dropout_rate = 0.1
     compress = 0.5
     
